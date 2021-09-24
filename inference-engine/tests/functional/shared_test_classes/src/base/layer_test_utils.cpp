@@ -347,6 +347,14 @@ void LayerTestsCommon::Infer() {
 
         const auto& info = infoIt->second;
         auto blob = inputs[i];
+
+        auto data = inputs[i]->buffer().as<const std::uint8_t *>();
+        std::cout << std::endl << "Inputs before\tinferRequest.Infer() at " << i << " index: ";
+        for (int ii = 0; ii < 100; ii++) {
+            int x = data[ii];
+            std::cout << x << ' ';
+        }
+//        std::cout << std::endl << std::endl;
         inferRequest.SetBlob(info->name(), blob);
     }
     if (configuration.count(InferenceEngine::PluginConfigParams::KEY_DYN_BATCH_ENABLED) &&
@@ -354,7 +362,18 @@ void LayerTestsCommon::Infer() {
         auto batchSize = executableNetwork.GetInputsInfo().begin()->second->getTensorDesc().getDims()[0] / 2;
         inferRequest.SetBatch(batchSize);
     }
+
     inferRequest.Infer();
+
+    for (int i = 0; i < functionParams.size(); ++i) {
+        auto data = inputs[i]->buffer().as<const std::uint8_t *>();
+        std::cout << std::endl << "Inputs after\tinferRequest.Infer() at " << i << " index: ";
+        for (int ii = 0; ii < 100; ii++) {
+            int x = data[ii];
+            std::cout << x << ' ';
+        }
+    }
+    std::cout << std::endl;
 }
 
 std::vector<std::pair<ngraph::element::Type, std::vector<std::uint8_t>>> LayerTestsCommon::CalculateRefs() {
@@ -429,11 +448,31 @@ void LayerTestsCommon::Validate() {
     auto expectedOutputs = CalculateRefs();
     const auto &actualOutputs = GetOutputs();
 
+    for (int i = 0; i < expectedOutputs.size(); ++i) {
+        auto data = expectedOutputs[i].second;
+        std::cout << std::endl << "expectedOutputs at " << i << " index: ";
+        for (int ii = 0; ii < 100; ii++) {
+            int x = data[ii];
+            std::cout << x << ' ';
+        }
+    }
+    std::cout << std::endl;
+
+    for (int i = 0; i < actualOutputs.size(); ++i) {
+        auto data = actualOutputs[i]->buffer().as<const std::uint8_t *>();
+        std::cout << std::endl << "actualOutputs at " << i << " index: ";
+        for (int ii = 0; ii < 100; ii++) {
+            int x = data[ii];
+            std::cout << x << ' ';
+        }
+    }
+    std::cout << std::endl;
+
     if (expectedOutputs.empty()) {
         return;
     }
 
-    IE_ASSERT(actualOutputs.size() == expectedOutputs.size())
+    IE_ASSERT(actualOutputs.size() == expectedOutputs.size()) // TODO: check dim`s sizes
     << "nGraph interpreter has " << expectedOutputs.size() << " outputs, while IE " << actualOutputs.size();
 
     Compare(expectedOutputs, actualOutputs);
