@@ -448,58 +448,22 @@ void LayerTestsCommon::Validate() {
     auto expectedOutputs = CalculateRefs();
     const auto &actualOutputs = GetOutputs();
 
-    std::cout << "CPU func test\n";
-
     for (int i = 0; i < expectedOutputs.size(); ++i) {
-        if (i == 0) {
-            auto data = std::vector<std::int64_t>(std::begin(expectedOutputs[i].second), std::end(expectedOutputs[i].second));
-            std::cout << std::endl << "expectedOutputs at " << i << " index: ";
-            for (int ii = 0; ii < 800; ii+=8) {
-                int64_t i64 = data[ii] | (data[ii+1] << 8) | (data[ii+2] << 16) | (data[ii+3] << 24)
-                              | (data[ii+4] << 32) | (data[ii+5] << 40) | (data[ii+6] << 48) | (data[ii+7] << 56);
-                std::cout << i64 << ' ';
-            }
-        } else if (i == 1) {
-            auto data = expectedOutputs[i].second;
-            std::cout << std::endl << "expectedOutputs at " << i << " index: ";
-            for (int ii = 0; ii < 100; ii++) {
-                int x = data[ii];
-                std::cout << x << ' ';
-            }
-        } else if (i == 2) {
-            auto data = std::vector<std::int64_t>(std::begin(expectedOutputs[i].second), std::end(expectedOutputs[i].second));
-            std::cout << std::endl << "expectedOutputs at " << i << " index: ";
-            for (int ii = 0; ii < 800; ii+=8) {
-                int64_t i64 = data[ii] | (data[ii+1] << 8) | (data[ii+2] << 16) | (data[ii+3] << 24)
-                        | (data[ii+4] << 32) | (data[ii+5] << 40) | (data[ii+6] << 48) | (data[ii+7] << 56);
-                std::cout << i64 << ' ';
-            }
+        auto data = expectedOutputs[i].second;
+        std::cout << std::endl << "expectedOutputs at " << i << " index: ";
+        for (int ii = 0; ii < 100; ii++) {
+            int x = data[ii];
+            std::cout << x << ' ';
         }
     }
     std::cout << std::endl;
 
     for (int i = 0; i < actualOutputs.size(); ++i) {
-        if (i == 0) {
-            auto data = actualOutputs[i]->buffer().as<const std::int32_t *>();
-            std::cout << std::endl << "actualOutputs at " << i << " index: ";
-            for (int ii = 0; ii < 100; ii++) {
-                int x = data[ii];
-                std::cout << x << ' ';
-            }
-        } else if (i == 1) {
-            auto data = actualOutputs[i]->buffer().as<const std::uint8_t *>();
-            std::cout << std::endl << "actualOutputs at " << i << " index: ";
-            for (int ii = 0; ii < 100; ii++) {
-                int x = data[ii];
-                std::cout << x << ' ';
-            }
-        } else {
-            auto data = actualOutputs[i]->buffer().as<const std::int32_t *>();
-            std::cout << std::endl << "actualOutputs at " << i << " index: ";
-            for (int ii = 0; ii < 100; ii++) {
-                int x = data[ii];
-                std::cout << x << ' ';
-            }
+        auto data = actualOutputs[i]->buffer().as<const std::uint8_t *>();
+        std::cout << std::endl << "actualOutputs at " << i << " index: ";
+        for (int ii = 0; ii < 100; ii++) {
+            int x = data[ii];
+            std::cout << x << ' ';
         }
     }
     std::cout << std::endl;

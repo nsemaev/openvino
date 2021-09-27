@@ -12,7 +12,6 @@ using namespace InferenceEngine;
 using namespace FuncTestUtils::PrecisionUtils;
 
 std::string NmsLayerTest::getTestCaseName(const testing::TestParamInfo<NmsParams>& obj) {
-    std::cout << "getTestCaseName";
     InputShapeParams inShapeParams;
     InputPrecisions inPrecisions;
     int32_t maxOutBoxesPerClass;
@@ -60,7 +59,6 @@ void NmsLayerTest::GenerateInputs() {
 void NmsLayerTest::Compare(const std::vector<std::pair<ngraph::element::Type, std::vector<std::uint8_t>>> &expectedOutputs,
                            const std::vector<InferenceEngine::Blob::Ptr> &actualOutputs) {
     CompareBBoxes(expectedOutputs, actualOutputs);
-    std::cout << '1';
 }
 
 void NmsLayerTest::CompareBuffer(const std::vector<std::pair<ngraph::element::Type, std::vector<std::uint8_t>>> &expectedOutputs,
