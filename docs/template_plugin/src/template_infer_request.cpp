@@ -33,41 +33,34 @@ using Time = std::chrono::high_resolution_clock;
 TemplateInferRequest::TemplateInferRequest(const InferenceEngine::InputsDataMap& networkInputs,
                                            const InferenceEngine::OutputsDataMap& networkOutputs,
                                            const std::shared_ptr<TemplatePlugin::ExecutableNetwork>& executableNetwork)
-    : IInferRequestInternal(networkInputs, networkOutputs),
-      _executableNetwork(executableNetwork) {
+        : IInferRequestInternal(networkInputs, networkOutputs),
+          _executableNetwork(executableNetwork) {
     createInferRequest();
 }
 
 TemplateInferRequest::TemplateInferRequest(const std::vector<std::shared_ptr<const ov::Node>>& inputs,
                                            const std::vector<std::shared_ptr<const ov::Node>>& outputs,
                                            const std::shared_ptr<TemplatePlugin::ExecutableNetwork>& executableNetwork)
-    : IInferRequestInternal(inputs, outputs),
-      _executableNetwork(executableNetwork) {
+        : IInferRequestInternal(inputs, outputs),
+          _executableNetwork(executableNetwork) {
     createInferRequest();
 }
 
 void TemplateInferRequest::createInferRequest() {
     // TODO: allocate infer request device and host buffers if needed, fill actual list of profiling tasks
-//    std::cout << "4635645454\n\n\n\n\n\n";
-//    std::ofstream out;          // поток для записи
-//    out.open("/home/nsemaev/Videos/test.txt"); // окрываем файл для записи
-//    if (out.is_open()) {
-//        out << "Hello World!" << std::endl;
-//    }
-//    out.close();
 
     auto requestID = std::to_string(_executableNetwork->_requestId.fetch_add(1));
 
     std::string name = _executableNetwork->_function->get_friendly_name() + "_Req" + requestID;
     _profilingTask = {
-        openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
-                              "_Preprocess"),
-        openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
-                              "_Postprocess"),
-        openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
-                              "_StartPipline"),
-        openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
-                              "_WaitPipline"),
+            openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
+                                  "_Preprocess"),
+            openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
+                                  "_Postprocess"),
+            openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
+                                  "_StartPipline"),
+            openvino::itt::handle("Template" + std::to_string(_executableNetwork->_cfg.deviceId) + "_" + name +
+                                  "_WaitPipline"),
     };
 
     _executable = _executableNetwork->_plugin->_backend->compile(_executableNetwork->_function);
@@ -146,13 +139,13 @@ void TemplateInferRequest::allocateBlobs() {
     });
     auto&& results = _executableNetwork->_function->get_results();
     AllocateImpl(
-        _networkOutputs,
-        _outputs,
-        _networkOutputBlobs,
-        [&](const std::string& blobName) {
-            return results.at(_executableNetwork->_outputIndex.at(blobName))->get_element_type();
-        },
-        false);
+            _networkOutputs,
+            _outputs,
+            _networkOutputBlobs,
+            [&](const std::string& blobName) {
+                return results.at(_executableNetwork->_outputIndex.at(blobName))->get_element_type();
+            },
+            false);
 }
 
 // ! [infer_request:infer_impl]
@@ -168,109 +161,109 @@ void TemplateInferRequest::InferImpl() {
 template <typename SrcT, typename DstT>
 static void blobCopy(const Blob::Ptr& src, const Blob::Ptr& dst) {
     ngraph::runtime::reference::convert<SrcT, DstT>(
-        InferenceEngine::as<InferenceEngine::MemoryBlob>(src)->rmap().as<const SrcT*>(),
-        InferenceEngine::as<InferenceEngine::MemoryBlob>(dst)->wmap().as<DstT*>(),
-        src->size());
+            InferenceEngine::as<InferenceEngine::MemoryBlob>(src)->rmap().as<const SrcT*>(),
+            InferenceEngine::as<InferenceEngine::MemoryBlob>(dst)->wmap().as<DstT*>(),
+            src->size());
 }
 
-static void blobCopy(const Blob::Ptr& src, const Blob::Ptr& dst) {
-    switch (src->getTensorDesc().getPrecision()) {
-    case Precision::U8: {
-        switch (dst->getTensorDesc().getPrecision()) {
-        case Precision::U8:
-            break;
-        case Precision::FP32: {
-            blobCopy<std::uint8_t, float>(src, dst);
-        } break;
-        default: {
-            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
-                                     << " to " << dst->getTensorDesc().getPrecision();
-        }
-        }
-    } break;
-    case Precision::FP32: {
-        switch (dst->getTensorDesc().getPrecision()) {
-        case Precision::FP32:
-            break;
-        case Precision::U8: {
-            blobCopy<float, std::uint8_t>(src, dst);
-        } break;
-        default: {
-            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
-                                     << " to " << dst->getTensorDesc().getPrecision();
-        }
-        }
-    } break;
-    case Precision::I64: {
-        switch (dst->getTensorDesc().getPrecision()) {
-        case Precision::I64:
-            break;
-        case Precision::I32: {
-            blobCopy<int64_t, int32_t>(src, dst);
-        } break;
-        default: {
-            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
-                                     << " to " << dst->getTensorDesc().getPrecision();
-        }
-        }
-    } break;
-    case Precision::I16: {
-        switch (dst->getTensorDesc().getPrecision()) {
-        case Precision::I16:
-            break;
-        case Precision::FP32: {
-            blobCopy<int16_t, float>(src, dst);
-        } break;
-        default: {
-            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
-                                     << " to " << dst->getTensorDesc().getPrecision();
-        }
-        }
-    } break;
-    case Precision::I8: {
-        switch (dst->getTensorDesc().getPrecision()) {
-        case Precision::I8:
-            break;
-        case Precision::FP32: {
-            blobCopy<int8_t, float>(src, dst);
-        } break;
-        default: {
-            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
-                                     << " to " << dst->getTensorDesc().getPrecision();
-        }
-        }
-    } break;
-    case Precision::BOOL: {
-        switch (dst->getTensorDesc().getPrecision()) {
-        case Precision::BOOL:
-            break;
-        case Precision::FP32: {
-            blobCopy<bool, float>(src, dst);
-        } break;
-        default: {
-            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
-                                     << " to " << dst->getTensorDesc().getPrecision();
-        }
-        }
-    } break;
-    case Precision::U16: {
-        switch (dst->getTensorDesc().getPrecision()) {
-        case Precision::U16:
-            break;
-        case Precision::FP32: {
-            blobCopy<uint16_t, float>(src, dst);
-        } break;
-        default: {
-            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
-                                     << " to " << dst->getTensorDesc().getPrecision();
-        }
-        }
-    } break;
-    default: {
-        IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision();
-    }
-    }
-}
+//static void blobCopy(const Blob::Ptr& src, const Blob::Ptr& dst) {
+//    switch (src->getTensorDesc().getPrecision()) {
+//        case Precision::U8: {
+//            switch (dst->getTensorDesc().getPrecision()) {
+//                case Precision::U8:
+//                    break;
+//                case Precision::FP32: {
+//                    blobCopy<std::uint8_t, float>(src, dst);
+//                } break;
+//                default: {
+//                    IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
+//                                             << " to " << dst->getTensorDesc().getPrecision();
+//                }
+//            }
+//        } break;
+//        case Precision::FP32: {
+//            switch (dst->getTensorDesc().getPrecision()) {
+//                case Precision::FP32:
+//                    break;
+//                case Precision::U8: {
+//                    blobCopy<float, std::uint8_t>(src, dst);
+//                } break;
+//                default: {
+//                    IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
+//                                             << " to " << dst->getTensorDesc().getPrecision();
+//                }
+//            }
+//        } break;
+//        case Precision::I64: {
+//            switch (dst->getTensorDesc().getPrecision()) {
+//                case Precision::I64:
+//                    break;
+//                case Precision::I32: {
+//                    blobCopy<int64_t, int32_t>(src, dst);
+//                } break;
+//                default: {
+//                    IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
+//                                             << " to " << dst->getTensorDesc().getPrecision();
+//                }
+//            }
+//        } break;
+//        case Precision::I16: {
+//            switch (dst->getTensorDesc().getPrecision()) {
+//                case Precision::I16:
+//                    break;
+//                case Precision::FP32: {
+//                    blobCopy<int16_t, float>(src, dst);
+//                } break;
+//                default: {
+//                    IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
+//                                             << " to " << dst->getTensorDesc().getPrecision();
+//                }
+//            }
+//        } break;
+//        case Precision::I8: {
+//            switch (dst->getTensorDesc().getPrecision()) {
+//                case Precision::I8:
+//                    break;
+//                case Precision::FP32: {
+//                    blobCopy<int8_t, float>(src, dst);
+//                } break;
+//                default: {
+//                    IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
+//                                             << " to " << dst->getTensorDesc().getPrecision();
+//                }
+//            }
+//        } break;
+//        case Precision::BOOL: {
+//            switch (dst->getTensorDesc().getPrecision()) {
+//                case Precision::BOOL:
+//                    break;
+//                case Precision::FP32: {
+//                    blobCopy<bool, float>(src, dst);
+//                } break;
+//                default: {
+//                    IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
+//                                             << " to " << dst->getTensorDesc().getPrecision();
+//                }
+//            }
+//        } break;
+//        case Precision::U16: {
+//            switch (dst->getTensorDesc().getPrecision()) {
+//                case Precision::U16:
+//                    break;
+//                case Precision::FP32: {
+//                    blobCopy<uint16_t, float>(src, dst);
+//                } break;
+//                default: {
+//                    IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision()
+//                                             << " to " << dst->getTensorDesc().getPrecision();
+//                }
+//            }
+//        } break;
+//        default: {
+//            IE_THROW(NotImplemented) << "Unsupported precision conversion from " << src->getTensorDesc().getPrecision();
+//        }
+//    }
+//}
 
 // ! [infer_request:infer_preprocess]
 void TemplateInferRequest::inferPreprocess() {
@@ -285,9 +278,9 @@ void TemplateInferRequest::inferPreprocess() {
         auto parameterShape = networkInput.second->getTensorDesc().getDims();
         const auto& parameterType = parameter->get_element_type();
         _inputTensors[index] = _executableNetwork->_plugin->_backend->create_tensor(
-            parameterType,
-            parameterShape,
-            InferenceEngine::as<InferenceEngine::MemoryBlob>(networkInput.second)->rmap().as<void*>());
+                parameterType,
+                parameterShape,
+                InferenceEngine::as<InferenceEngine::MemoryBlob>(networkInput.second)->rmap().as<void*>());
     }
     for (auto&& output : _outputs) {
         auto outputBlob = output.second;
@@ -304,9 +297,9 @@ void TemplateInferRequest::inferPreprocess() {
         const auto& resultShape = result->get_shape();
         const auto& resultType = result->get_element_type();
         _outputTensors[index] = _executableNetwork->_plugin->_backend->create_tensor(
-            resultType,
-            resultShape,
-            InferenceEngine::as<InferenceEngine::MemoryBlob>(networkOutput)->wmap().as<void*>());
+                resultType,
+                resultShape,
+                InferenceEngine::as<InferenceEngine::MemoryBlob>(networkOutput)->wmap().as<void*>());
     }
     _durations[Preprocess] = Time::now() - start;
 }
@@ -331,80 +324,28 @@ void TemplateInferRequest::waitPipeline() {
 
 // ! [infer_request:infer_postprocess]
 void TemplateInferRequest::inferPostprocess() {
-    OV_ITT_SCOPED_TASK(itt::domains::TemplatePlugin, _profilingTask[Postprocess]);
-    std::cout << std::endl << "Call TemplateInferRequest::inferPostprocess() _outputs:" << std::endl;
-    std::vector <std::string> keys;
+    std::cout << "Var `output_names`:" << std::endl;
+    std::vector <std::string> output_names;
     for (std::map<std::string, InferenceEngine::Blob::Ptr>::iterator it = _outputs.begin(); it != _outputs.end(); ++it) {
-//        std::cout << "Key: " << it->first << std::endl;
-//        std::cout << "Value: " << it->second << std::endl();
-        keys.push_back(it->first);
+        output_names.push_back(it->first);
+        std::cout << output_names[output_names.size()-1] << std::endl;
     }
-    for (std::size_t i = 0; i < keys.size(); ++i) {
-        auto cur_key = keys[i];
-        std::size_t actual_size = 1;
-        std::cout << '\t' << i << ": ";
-        auto dims = _outputs[cur_key]->getTensorDesc().getDims();
-        for (std::size_t j = 0; j < dims.size(); ++j) {
-            actual_size *= dims[j];
-            std::cout << dims[j];
-            if (j < dims.size() - 1) {
-                std::cout << '*';
-            }
-        }
-        std::cout << " elems  - ";
-        std::cout << _outputs[cur_key]->getTensorDesc().getPrecision().name();
-        std::cout << std::endl << '\t';
-        auto data = _outputs[cur_key]->buffer().as<unsigned char*>();
-        std::size_t actual_size_bytes = actual_size * 8;
-        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
-            int val = data[j];
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-    }
+    std::cout << std::endl;
 
-//    auto dims = _networkOutputBlobs[output.first]->getTensorDesc().getDims();
-//    int actual_size = 1;
-//    for (std::size_t j = 0; j < dims.size(); ++j) {
-//        actual_size *= dims[j];
-//        std::cout << dims[j];
-//        if (j < dims.size() - 1) {
-//            std::cout << '*';
-//        }
-//    }
-//    std::cout << " elems  - ";
-//    std::cout << _networkOutputBlobs[output.first]->getTensorDesc().getPrecision().name();
-//    std::cout << std::endl << '\t';
-//    auto data = _networkOutputBlobs[output.first]->buffer().as<unsigned char*>();
-//    std::size_t actual_size_bytes = actual_size * 8;
-//    for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
-//        int val = data[j];
-//        std::cout << val << " ";
+    std::cout << "Var `_networkOutputs`:" << std::endl;
+    auto x = _executableNetwork->_function->get_results();
+
+    //    std::cout << x;
+
+    auto results = _executableNetwork->_function->get_results();
+//    for (const auto & result : results) {
+//        std::cout << result.;
 //    }
 //    std::cout << std::endl;
+
+    OV_ITT_SCOPED_TASK(itt::domains::TemplatePlugin, _profilingTask[Postprocess]);
     auto start = Time::now();
     for (auto&& output : _networkOutputs) {
-
-        auto dims = _networkOutputBlobs[output.first]->getTensorDesc().getDims();
-        int actual_size = 1;
-        for (std::size_t j = 0; j < dims.size(); ++j) {
-            actual_size *= dims[j];
-            std::cout << dims[j];
-            if (j < dims.size() - 1) {
-                std::cout << '*';
-            }
-        }
-        std::cout << " elems  - ";
-        std::cout << _networkOutputBlobs[output.first]->getTensorDesc().getPrecision().name();
-        std::cout << std::endl << '\t';
-        auto data = _networkOutputBlobs[output.first]->buffer().as<unsigned char*>();
-        std::size_t actual_size_bytes = actual_size * 8;
-        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
-            int val = data[j];
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
-
         auto index = _executableNetwork->_outputIndex[output.first];
         const auto& result = _executableNetwork->_function->get_results()[index];
         if (result->get_output_partial_shape(0).is_dynamic()) {
@@ -413,37 +354,17 @@ void TemplateInferRequest::inferPostprocess() {
         }
         auto outputBlob = _outputs.at(output.first);
         auto networkOutput = _networkOutputBlobs[output.first];
-        if (outputBlob->getTensorDesc().getPrecision() != networkOutput->getTensorDesc().getPrecision()) {
-            blobCopy(networkOutput, outputBlob);
-        } else if (result->get_output_partial_shape(0).is_dynamic()) {
-            auto tensor = _outputTensors[_executableNetwork->_outputIndex.at(output.first)];
-            tensor->read(InferenceEngine::as<InferenceEngine::MemoryBlob>(outputBlob)->wmap().as<char*>(),
-                         tensor->get_size_in_bytes());
-        }
-    }
-    std::cout << std::endl << "Exit TemplateInferRequest::inferPostprocess()" << std::endl;
-    for (std::size_t i = 0; i < keys.size(); ++i) {
-        auto cur_key = keys[i];
-        std::size_t actual_size = 1;
-        std::cout << '\t' << i << ": ";
-        auto dims = _outputs[cur_key]->getTensorDesc().getDims();
-        for (std::size_t j = 0; j < dims.size(); ++j) {
-            actual_size *= dims[j];
-            std::cout << dims[j];
-            if (j < dims.size() - 1) {
-                std::cout << '*';
-            }
-        }
-        std::cout << " elems  - ";
-        std::cout << _outputs[cur_key]->getTensorDesc().getPrecision().name();
-        std::cout << std::endl << '\t';
-        auto data = _outputs[cur_key]->buffer().as<unsigned char*>();
-        std::size_t actual_size_bytes = actual_size * 8;
-        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
-            int val = data[j];
-            std::cout << val << " ";
-        }
-        std::cout << std::endl;
+
+        auto tensor = _outputTensors[_executableNetwork->_outputIndex.at(output.first)];
+        tensor->read(InferenceEngine::as<InferenceEngine::MemoryBlob>(outputBlob)->wmap().as<char*>(),
+                tensor->get_size_in_bytes());
+//        if (outputBlob->getTensorDesc().getPrecision() != networkOutput->getTensorDesc().getPrecision()) {
+//            blobCopy(networkOutput, outputBlob);
+//        } else if (result->get_output_partial_shape(0).is_dynamic()) {
+//            auto tensor = _outputTensors[_executableNetwork->_outputIndex.at(output.first)];
+//            tensor->read(InferenceEngine::as<InferenceEngine::MemoryBlob>(outputBlob)->wmap().as<char*>(),
+//                         tensor->get_size_in_bytes());
+//        }
     }
     _durations[Postprocess] = Time::now() - start;
 }
@@ -505,13 +426,13 @@ InferenceEngine::Blob::Ptr TemplateInferRequest::GetBlob(const std::string& name
         if (data->getTensorDesc().getDims() != dims) {
             auto&& results = _executableNetwork->_function->get_results();
             AllocateImplSingle(
-                _outputs,
-                _networkOutputBlobs,
-                *_networkOutputs.find(name),
-                [&](const std::string& blobName) {
-                    return results.at(_executableNetwork->_outputIndex.at(blobName))->get_element_type();
-                },
-                dims);
+                    _outputs,
+                    _networkOutputBlobs,
+                    *_networkOutputs.find(name),
+                    [&](const std::string& blobName) {
+                        return results.at(_executableNetwork->_outputIndex.at(blobName))->get_element_type();
+                    },
+                    dims);
             data = _outputs[name];
         }
         checkBlob(data, name, false, foundOutput->getTensorDesc().getLayout() != SCALAR ? dims : oneVector);
@@ -535,12 +456,12 @@ void TemplateInferRequest::SetBlob(const std::string& name, const InferenceEngin
     const bool remoteBlobPassed = userBlob->is<RemoteBlob>();
     if (!compoundBlobPassed && !remoteBlobPassed && userBlob->buffer() == nullptr)
         IE_THROW(NotAllocated) << "Input data was not allocated. Input name: \'" << name << "\'";
-    IE_SUPPRESS_DEPRECATED_START
+            IE_SUPPRESS_DEPRECATED_START
     if (userBlob->size() == 0 &&
         !((foundInput && foundInput->getInputData()->isDynamic()) || (foundOutput && foundOutput->isDynamic()))) {
         IE_THROW() << "Input data is empty. Input name: \'" << name << "\'";
     }
-    IE_SUPPRESS_DEPRECATED_END
+            IE_SUPPRESS_DEPRECATED_END
 
     size_t dataSize = userBlob->size();
     if (isInput) {
@@ -548,7 +469,7 @@ void TemplateInferRequest::SetBlob(const std::string& name, const InferenceEngin
         // which are supports by G-API preprocessing
         if (foundInput->getPrecision() != userBlob->getTensorDesc().getPrecision()) {
             IE_THROW(ParameterMismatch)
-                << "Failed to set Blob with precision not corresponding to user input precision";
+                    << "Failed to set Blob with precision not corresponding to user input precision";
         }
 
         auto& devBlob = _deviceInputs[name];
@@ -563,7 +484,7 @@ void TemplateInferRequest::SetBlob(const std::string& name, const InferenceEngin
             devBlob->allocate();
             _deviceInputs[name] = devBlob;
         }
-        IE_SUPPRESS_DEPRECATED_END
+                IE_SUPPRESS_DEPRECATED_END
         const bool preProcRequired = preProcessingRequired(foundInput, userBlob, devBlob);
         if (compoundBlobPassed && !preProcRequired) {
             IE_THROW(NotImplemented) << "cannot set compound blob: supported only for input pre-processing";
@@ -573,8 +494,8 @@ void TemplateInferRequest::SetBlob(const std::string& name, const InferenceEngin
             addInputPreProcessingFor(name, userBlob, devBlob ? devBlob : _inputs[name]);
         } else {
             size_t inputSize = devBlob->getTensorDesc().getLayout() != InferenceEngine::Layout::SCALAR
-                                   ? InferenceEngine::details::product(devBlob->getTensorDesc().getDims())
-                                   : 1;
+                               ? InferenceEngine::details::product(devBlob->getTensorDesc().getDims())
+                               : 1;
             if (dataSize != inputSize) {
                 IE_THROW() << "Input blob size is not equal network input size (" << dataSize << "!=" << inputSize
                            << ").";
@@ -598,17 +519,17 @@ void TemplateInferRequest::SetBlob(const std::string& name, const InferenceEngin
             devBlob->allocate();
             _networkOutputBlobs[name] = devBlob;
         }
-        IE_SUPPRESS_DEPRECATED_END
+                IE_SUPPRESS_DEPRECATED_END
         size_t outputSize = devBlob->getTensorDesc().getLayout() != InferenceEngine::Layout::SCALAR
-                                ? details::product(devBlob->getTensorDesc().getDims())
-                                : 1;
+                            ? details::product(devBlob->getTensorDesc().getDims())
+                            : 1;
         if (dataSize != outputSize) {
             IE_THROW() << "Output blob size is not equal network output size (" << dataSize << "!=" << outputSize
                        << ").";
         }
         if (foundOutput->getPrecision() != userBlob->getTensorDesc().getPrecision()) {
             IE_THROW(ParameterMismatch)
-                << "Failed to set Blob with precision not corresponding to user output precision";
+                    << "Failed to set Blob with precision not corresponding to user output precision";
         }
         _outputs[name] = userBlob;
     }
