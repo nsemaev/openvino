@@ -48,6 +48,13 @@ TemplateInferRequest::TemplateInferRequest(const std::vector<std::shared_ptr<con
 
 void TemplateInferRequest::createInferRequest() {
     // TODO: allocate infer request device and host buffers if needed, fill actual list of profiling tasks
+//    std::cout << "4635645454\n\n\n\n\n\n";
+//    std::ofstream out;          // поток для записи
+//    out.open("/home/nsemaev/Videos/test.txt"); // окрываем файл для записи
+//    if (out.is_open()) {
+//        out << "Hello World!" << std::endl;
+//    }
+//    out.close();
 
     auto requestID = std::to_string(_executableNetwork->_requestId.fetch_add(1));
 
@@ -325,8 +332,79 @@ void TemplateInferRequest::waitPipeline() {
 // ! [infer_request:infer_postprocess]
 void TemplateInferRequest::inferPostprocess() {
     OV_ITT_SCOPED_TASK(itt::domains::TemplatePlugin, _profilingTask[Postprocess]);
+    std::cout << std::endl << "Call TemplateInferRequest::inferPostprocess() _outputs:" << std::endl;
+    std::vector <std::string> keys;
+    for (std::map<std::string, InferenceEngine::Blob::Ptr>::iterator it = _outputs.begin(); it != _outputs.end(); ++it) {
+//        std::cout << "Key: " << it->first << std::endl;
+//        std::cout << "Value: " << it->second << std::endl();
+        keys.push_back(it->first);
+    }
+    for (std::size_t i = 0; i < keys.size(); ++i) {
+        auto cur_key = keys[i];
+        std::size_t actual_size = 1;
+        std::cout << '\t' << i << ": ";
+        auto dims = _outputs[cur_key]->getTensorDesc().getDims();
+        for (std::size_t j = 0; j < dims.size(); ++j) {
+            actual_size *= dims[j];
+            std::cout << dims[j];
+            if (j < dims.size() - 1) {
+                std::cout << '*';
+            }
+        }
+        std::cout << " elems  - ";
+        std::cout << _outputs[cur_key]->getTensorDesc().getPrecision().name();
+        std::cout << std::endl << '\t';
+        auto data = _outputs[cur_key]->buffer().as<unsigned char*>();
+        std::size_t actual_size_bytes = actual_size * 8;
+        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
+            int val = data[j];
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+
+//    auto dims = _networkOutputBlobs[output.first]->getTensorDesc().getDims();
+//    int actual_size = 1;
+//    for (std::size_t j = 0; j < dims.size(); ++j) {
+//        actual_size *= dims[j];
+//        std::cout << dims[j];
+//        if (j < dims.size() - 1) {
+//            std::cout << '*';
+//        }
+//    }
+//    std::cout << " elems  - ";
+//    std::cout << _networkOutputBlobs[output.first]->getTensorDesc().getPrecision().name();
+//    std::cout << std::endl << '\t';
+//    auto data = _networkOutputBlobs[output.first]->buffer().as<unsigned char*>();
+//    std::size_t actual_size_bytes = actual_size * 8;
+//    for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
+//        int val = data[j];
+//        std::cout << val << " ";
+//    }
+//    std::cout << std::endl;
     auto start = Time::now();
     for (auto&& output : _networkOutputs) {
+
+        auto dims = _networkOutputBlobs[output.first]->getTensorDesc().getDims();
+        int actual_size = 1;
+        for (std::size_t j = 0; j < dims.size(); ++j) {
+            actual_size *= dims[j];
+            std::cout << dims[j];
+            if (j < dims.size() - 1) {
+                std::cout << '*';
+            }
+        }
+        std::cout << " elems  - ";
+        std::cout << _networkOutputBlobs[output.first]->getTensorDesc().getPrecision().name();
+        std::cout << std::endl << '\t';
+        auto data = _networkOutputBlobs[output.first]->buffer().as<unsigned char*>();
+        std::size_t actual_size_bytes = actual_size * 8;
+        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
+            int val = data[j];
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+
         auto index = _executableNetwork->_outputIndex[output.first];
         const auto& result = _executableNetwork->_function->get_results()[index];
         if (result->get_output_partial_shape(0).is_dynamic()) {
@@ -342,6 +420,30 @@ void TemplateInferRequest::inferPostprocess() {
             tensor->read(InferenceEngine::as<InferenceEngine::MemoryBlob>(outputBlob)->wmap().as<char*>(),
                          tensor->get_size_in_bytes());
         }
+    }
+    std::cout << std::endl << "Exit TemplateInferRequest::inferPostprocess()" << std::endl;
+    for (std::size_t i = 0; i < keys.size(); ++i) {
+        auto cur_key = keys[i];
+        std::size_t actual_size = 1;
+        std::cout << '\t' << i << ": ";
+        auto dims = _outputs[cur_key]->getTensorDesc().getDims();
+        for (std::size_t j = 0; j < dims.size(); ++j) {
+            actual_size *= dims[j];
+            std::cout << dims[j];
+            if (j < dims.size() - 1) {
+                std::cout << '*';
+            }
+        }
+        std::cout << " elems  - ";
+        std::cout << _outputs[cur_key]->getTensorDesc().getPrecision().name();
+        std::cout << std::endl << '\t';
+        auto data = _outputs[cur_key]->buffer().as<unsigned char*>();
+        std::size_t actual_size_bytes = actual_size * 8;
+        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
+            int val = data[j];
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
     }
     _durations[Postprocess] = Time::now() - start;
 }

@@ -221,6 +221,45 @@ void MKLDNNPlugin::MKLDNNInferRequest::InferImpl() {
     ThrowIfCanceled();
 
     graph->PullOutputData(_outputs);
+    std::ofstream out;          // поток для записи
+    out.open("/home/nsemaev/cpu_oooooooopenvino.txt"); // окрываем файл для записи
+    if (out.is_open()) {
+        out << "Hello World!" << std::endl;
+    }
+    out.close();
+    exit(1);
+    std::vector <std::string> keys;
+    std::vector<int> key, value;
+    for (std::map<std::string, InferenceEngine::Blob::Ptr>::iterator it = _outputs.begin(); it != _outputs.end(); ++it) {
+        std::cout << "Key: " << it->first << std::endl;
+//        std::cout << "Value: " << it->second << std::endl();
+        keys.push_back(it->first);
+    }
+    std::cout << "After CPU infer(): " << std::endl;
+    for (std::size_t i = 0; i < keys.size(); ++i) {
+        auto cur_key = keys[i];
+        std::size_t actual_size = 1;
+        std::cout << '\t' << i << ": ";
+        auto dims = _outputs[cur_key]->getTensorDesc().getDims();
+        for (std::size_t j = 0; j < dims.size(); ++j) {
+            actual_size *= dims[j];
+            std::cout << dims[j];
+            if (j < dims.size() - 1) {
+                std::cout << '*';
+            }
+        }
+        std::cout << " elems  - ";
+        auto it = _outputs.begin();
+        std::cout << _outputs[cur_key]->getTensorDesc().getPrecision().name();
+        std::cout << std::endl << '\t';
+        auto data = _outputs[cur_key]->buffer().as<unsigned char*>();
+        std::size_t actual_size_bytes = actual_size * 8;
+        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100); ++j) {
+            int val = data[j];
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
 }
 
 std::map<std::string, InferenceEngine::InferenceEngineProfileInfo> MKLDNNPlugin::MKLDNNInferRequest::GetPerformanceCounts() const {

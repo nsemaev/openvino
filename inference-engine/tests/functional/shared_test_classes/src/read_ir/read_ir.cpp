@@ -79,12 +79,13 @@ void ReadIRTest::SetUp() {
 }
 
 void ReadIRTest::GenerateInputs() {
+    std::cout << "ReadIRTest::GenerateInputs()" << std::endl;
     auto inputMap = getInputMap();
     const auto &inputsInfo = executableNetwork.GetInputsInfo();
     for (const auto &param : function->get_parameters()) {
         const auto infoIt = inputsInfo.find(param->get_friendly_name());
         GTEST_ASSERT_NE(infoIt, inputsInfo.cend());
-
+        std::cout << "inputs: ";
         const auto &info = infoIt->second;
         for (size_t i = 0; i < param->get_output_size(); i++) {
             for (const auto &node : param->get_output_target_inputs(i)) {
@@ -92,11 +93,20 @@ void ReadIRTest::GenerateInputs() {
                 auto it = inputMap.find(nodePtr->get_type_info());
                 for (size_t port = 0; port < nodePtr->get_input_size(); ++port) {
                     if (nodePtr->get_input_node_ptr(port)->shared_from_this() == param->shared_from_this()) {
-                        inputs.push_back(it->second(nodePtr, *info, port));
+                        auto value = it->second(nodePtr, *info, port);
+                        std::cout << value << '\n';
+                        inputs.push_back(value);
+                        auto data = value->buffer().as<unsigned char*>();
+                        for (std::size_t j = 0; j < 100; ++j) {
+                            int val = data[j];
+                            std::cout << val << " ";
+                        }
+                        std::cout << std::endl;
                     }
                 }
             }
         }
+        std::cout << std::endl;
     }
 }
 
@@ -113,6 +123,7 @@ void ReadIRTest::Compare(const std::vector<std::pair<ngraph::element::Type, std:
 }
 
 std::vector<InferenceEngine::Blob::Ptr> ReadIRTest::GetOutputs() {
+    std::cout << "ReadIRTest::GetOutputs()" << std::endl;
     std::vector<InferenceEngine::Blob::Ptr> outputs;
     for (const auto &result : function->get_results()) {
         for (size_t inPort = 0; inPort < result->get_input_size(); ++inPort) {
