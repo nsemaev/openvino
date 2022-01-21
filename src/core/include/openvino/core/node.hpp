@@ -200,8 +200,6 @@ public:
     /// \param output_values Tensors for the outputs to compute. One for each result
     /// \param input_values Tensors for the inputs. One for each inputs.
     /// \returns true if successful
-    OPENVINO_DEPRECATED(
-        "This method is deprecated and will be removed soon. Please use evaluate with ov::runtime::Tensor instead.")
     virtual bool evaluate(const ov::HostTensorVector& output_values, const ov::HostTensorVector& input_values) const;
     /// \deprecated Use evaluate with ov::runtime::Tensor instead
     /// \brief Evaluates the op on input_values putting results in output_values
@@ -210,16 +208,10 @@ public:
     /// \param evaluation_context Storage of additional settings and attributes that can be used
     /// when evaluating the op.
     /// \returns true if successful
-    OPENVINO_DEPRECATED(
-        "This method is deprecated and will be removed soon. Please use evaluate with ov::runtime::Tensor instead.")
     virtual bool evaluate(const ov::HostTensorVector& output_values,
                           const ov::HostTensorVector& input_values,
                           const EvaluationContext& evaluationContext) const;
-    OPENVINO_DEPRECATED("This method is deprecated and will be removed soon. Please use evaluate_lower with "
-                        "ov::runtime::Tensor instead.")
     virtual bool evaluate_lower(const ov::HostTensorVector& output_values) const;
-    OPENVINO_DEPRECATED("This method is deprecated and will be removed soon. Please use evaluate_upper with "
-                        "ov::runtime::Tensor instead.")
     virtual bool evaluate_upper(const ov::HostTensorVector& output_values) const;
 
     /// \brief Evaluates the op on input_values putting results in output_values
@@ -367,7 +359,6 @@ public:
     descriptor::Tensor& get_input_tensor(size_t i) const;
 
     /// Returns the tensor name for output i
-    OPENVINO_DEPRECATED("The tensor name was deprecated. Use get_output_tensor(i).get_names() instead.")
     const std::string& get_output_tensor_name(size_t i) const;
 
     std::set<Input<Node>> get_output_target_inputs(size_t i) const;
@@ -388,7 +379,6 @@ public:
     const PartialShape& get_input_partial_shape(size_t i) const;
 
     /// Returns the tensor name for input i
-    OPENVINO_DEPRECATED("The tensor name was deprecated. Use get_input_tensor(i).get_names() instead.")
     const std::string& get_input_tensor_name(size_t i) const;
 
     Node* get_input_node_ptr(size_t index) const;
@@ -421,8 +411,6 @@ public:
     virtual size_t get_version() const {
         return get_type_info().version;
     }
-
-    OPENVINO_DEPRECATED("This method is deprecated and will be removed soon.")
     virtual std::shared_ptr<Node> get_default_value() const {
         return nullptr;
     }
@@ -466,11 +454,9 @@ public:
     Output<const Node> output(size_t output_index) const;
 
     OPENVINO_SUPPRESS_DEPRECATED_START
-    OPENVINO_DEPRECATED("This method is deprecated and will be removed soon.")
     void set_op_annotations(std::shared_ptr<ngraph::op::util::OpAnnotations> op_annotations) {
         m_op_annotations = op_annotations;
     }
-    OPENVINO_DEPRECATED("This method is deprecated and will be removed soon.")
     std::shared_ptr<ngraph::op::util::OpAnnotations> get_op_annotations() const {
         return m_op_annotations;
     }

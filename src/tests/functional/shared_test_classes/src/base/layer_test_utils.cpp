@@ -471,6 +471,42 @@ void LayerTestsCommon::Validate() {
     auto expectedOutputs = CalculateRefs();
     const auto &actualOutputs = GetOutputs();
 
+    std::cout << "Expected:" << std::endl;
+    for (std::size_t i = 0; i < expectedOutputs.size(); ++i) {
+        std::cout << '\t' << i << ": " << expectedOutputs[i].second.size() << " bytes - "
+                  << expectedOutputs[i].first.get_type_name() << " (" << expectedOutputs[i].first.size() << ")" << std::endl << '\t';
+        for (std::size_t j = 0; j < fmin(expectedOutputs[i].second.size(), 100); ++j) {
+            int val = expectedOutputs[i].second[j];
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
+
+    std::cout << "Actual:" << std::endl;
+    for (std::size_t i = 0; i < actualOutputs.size(); ++i) {
+        std::size_t actual_size = 1;
+        std::cout << '\t' << i << ": ";
+        auto dims = actualOutputs[i]->getTensorDesc().getDims();
+        for (std::size_t j = 0; j < dims.size(); ++j) {
+            actual_size *= dims[j];
+            std::cout << dims[j];
+            if (j < dims.size() - 1) {
+                std::cout << '*';
+            }
+        }
+        std::cout << " elems  - ";
+        std::cout << actualOutputs[0]->getTensorDesc().getPrecision().name();
+        std::cout << std::endl << '\t';
+        auto data = actualOutputs[i]->buffer().as<unsigned char*>();
+        std::size_t actual_size_bytes = actual_size * 8;
+        for (std::size_t j = 0; j < fmin(actual_size_bytes, 100000); ++j) {
+            int val = data[j];
+            std::cout << val << " ";
+        }
+        std::cout << std::endl;
+    }
+
     if (expectedOutputs.empty()) {
         return;
     }
