@@ -294,6 +294,7 @@ const std::map<std::string, InferenceEngine::InputInfo::Ptr> InferenceEnginePyth
 }
 
 const std::map<std::string, InferenceEngine::DataPtr> InferenceEnginePython::IENetwork::getOutputs() {
+    std::cout << "InferenceEnginePython::IENetwork::getOutputs() " << std::endl << std::endl;
     std::map<std::string, InferenceEngine::DataPtr> outputs;
     const InferenceEngine::OutputsDataMap& outputsInfo = actual->getOutputsInfo();
     for (auto& out : outputsInfo) {
@@ -380,6 +381,7 @@ std::map<std::string, InferenceEngine::InputInfo::CPtr> InferenceEnginePython::I
 }
 
 std::map<std::string, InferenceEngine::CDataPtr> InferenceEnginePython::IEExecNetwork::getOutputs() {
+    std::cout << "InferenceEnginePython::IEExecNetwork::getOutputs()" << std::endl << std::endl;
     InferenceEngine::ConstOutputsDataMap outputsDataMap = actual->GetOutputsInfo();
     std::map<std::string, InferenceEngine::CDataPtr> pyOutputs;
     for (const auto& item : outputsDataMap) {

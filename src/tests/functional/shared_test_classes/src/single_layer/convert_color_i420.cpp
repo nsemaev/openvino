@@ -113,6 +113,7 @@ std::vector<std::pair<ngraph::element::Type, std::vector<std::uint8_t>>> Convert
 }
 
 std::vector<InferenceEngine::Blob::Ptr> ConvertColorI420AccuracyTest::GetOutputs() {
+    std::cout << "ConvertColorI420AccuracyTest::GetOutputs()" << std::endl << std::endl;
     auto outputs = ConvertColorI420LayerTest::GetOutputs();
     if (!outputs.empty()) {
         actual_output = InferenceEngine::Blob::Ptr(outputs[0]);

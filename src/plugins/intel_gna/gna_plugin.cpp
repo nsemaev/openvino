@@ -1664,6 +1664,7 @@ std::vector<std::shared_ptr<const ov::Node>> GNAPlugin::GetInputs() {
 }
 
 std::vector<std::shared_ptr<const ov::Node>> GNAPlugin::GetOutputs() {
+    std::cout << "GNAPlugin::GetOutputs()" << std::endl << std::endl;
     std::vector<std::shared_ptr<const ov::Node>> results;
     results.reserve(outputs_.size());
     for (auto&& output : outputs_.Get()) {

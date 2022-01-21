@@ -213,6 +213,7 @@ void LayerTestsCommon::Compare(const std::pair<ngraph::element::Type, std::vecto
                                const InferenceEngine::Blob::Ptr &actual,
                                float threshold,
                                float abs_threshold) {
+    std::cout << "Expected:" << std::endl;
     const auto &precision = actual->getTensorDesc().getPrecision();
     auto k =  static_cast<float>(expected.first.size()) / precision.size();
     // W/A for int4, uint4
@@ -451,6 +452,7 @@ std::vector<std::pair<ngraph::element::Type, std::vector<std::uint8_t>>> LayerTe
 }
 
 std::vector<InferenceEngine::Blob::Ptr> LayerTestsCommon::GetOutputs() {
+    std::cout << "LayerTestsCommon::GetOutputs() " << std::endl << std::endl;
     auto outputs = std::vector<InferenceEngine::Blob::Ptr>{};
     for (const auto &output : executableNetwork.GetOutputsInfo()) {
         const auto &name = output.first;

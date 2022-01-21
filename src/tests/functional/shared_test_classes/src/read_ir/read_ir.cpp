@@ -151,6 +151,7 @@ void ReadIRTest::Compare(const std::vector<std::pair<ngraph::element::Type, std:
 }
 
 std::vector<InferenceEngine::Blob::Ptr> ReadIRTest::GetOutputs() {
+    std::cout << "ReadIRTest::GetOutputs()" << std::endl << std::endl;
     std::vector<InferenceEngine::Blob::Ptr> outputs;
     for (const auto &result : function->get_results()) {
         for (size_t inPort = 0; inPort < result->get_input_size(); ++inPort) {
